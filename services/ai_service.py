@@ -1,6 +1,7 @@
 import datetime
 import google.generativeai as genai
-from constants import GEMINI_API_KEY, GEMINI_MODEL_NAME
+from utils.constants import GEMINI_API_KEY, GEMINI_MODEL_NAME
+from utils.logger import ai_log
 
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -35,4 +36,5 @@ def generate_professional_report(reporte_raw):
     response = model.generate_content([prompt])
     resumen_str = str(response.candidates[0].content.parts[0].text).strip()
 
+    ai_log(response)
     return resumen_str
