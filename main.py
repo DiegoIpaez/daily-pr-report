@@ -1,6 +1,6 @@
 from services.gh_service import get_all_prs, get_pr_commits_by_pr_number
 from services.ai_service import generate_professional_report
-
+from utils.logger import app_log
 
 def show_commit(commit):
     sha = commit["sha"]
@@ -41,10 +41,10 @@ def show_pr(pr):
 
 def main():
     try:
-        print("📌 Buscando tus PRs actualizados hoy...\n")
+        app_log("📌 Buscando tus PRs actualizados hoy...\n")
         prs = get_all_prs()
 
-        print(f"🔵 Encontrados {len(prs)} PRs actualizados hoy.\n")
+        app_log(f"🔵 Encontrados {len(prs)} PRs actualizados hoy.\n")
         if not prs:
             exit("No hay PRs hoy.")
 
@@ -52,12 +52,12 @@ def main():
         for pr in prs:
             reporte_str += show_pr(pr)
 
+        app_log(reporte_str)
         dr = generate_professional_report(reporte_str)
-        print("\n\n--- DAILY REPORT ---\n")
-        print(dr)
+        app_log(dr)
 
     except Exception as error:
-        print(f"Error: {error}")
+        app_log(f"Error: {error}")
         return None
 
 

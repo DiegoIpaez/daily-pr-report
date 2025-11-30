@@ -1,6 +1,6 @@
 import requests
 import datetime
-from constants import GITHUB_TOKEN, GITHUB_API_URL, GITHUB_USERNAME
+from utils.constants import GITHUB_TOKEN, GITHUB_API_URL, GITHUB_USERNAME
 
 DEFAULT_GH_HEADERS = {
     "Authorization": f"token {GITHUB_TOKEN}",
