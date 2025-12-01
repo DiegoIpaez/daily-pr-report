@@ -1,60 +1,44 @@
+import json
 from services.gh_service import get_all_prs, get_pr_commits_by_pr_number
 from services.ai_service import generate_professional_report
 from utils.logger import app_log
 
-def show_commit(commit):
-    sha = commit["sha"]
-    mensaje = commit["commit"]["message"]
-    autor = commit["commit"]["author"]["name"]
-    fecha = commit["commit"]["author"]["date"]
-    return f"    - {sha}: {mensaje} by {autor} on {fecha}\n"
+
+def extract_commit(commit):
+    return {"title": commit["commit"]["message"]}
 
 
-def show_pr(pr):
-    state = pr["state"]
-    titulo = pr["title"]
-    url = pr["html_url"]
-    numero = pr["number"]
-    user = pr["user"]["login"]
-    repo_api = pr["repository_url"]
-    association = pr["author_association"]
-    closed = pr.get("closed_at", "N/A")
-    labels = [label["name"] for label in pr["labels"]]
-    repo_owner = repo_api.split("/")[-2]
+def extract_pr(pull_request):
+    repo_api = pull_request["repository_url"]
     repo_name = repo_api.split("/")[-1]
 
-    pr_str = f"\n🔵 PR #{numero} — {repo_owner}/{repo_name}\n"
-    pr_str += f"    Título: {titulo}\n"
-    pr_str += f"    URL: {url}\n"
-    pr_str += f"    Repositorio: {repo_name}\n"
-    pr_str += f"    Autor: {user} ({association})\n"
-    pr_str += f"    Estado: {state}\n"
-    pr_str += f"    Labels: {', '.join(labels) if labels else 'Ninguna'}\n"
-    pr_str += f"    Cerrado: {closed}\n"
+    commits_raw = get_pr_commits_by_pr_number(repo_api, pull_request["number"])
+    commits = [extract_commit(commit) for commit in commits_raw]
 
-    commits = get_pr_commits_by_pr_number(repo_api, numero)
-    pr_str += "    Commits:\n"
-    for commit in commits:
-        pr_str += show_commit(commit)
-    return pr_str
+    return {
+        "repository": repo_name,
+        "pull_request": {
+            "number": pull_request["number"],
+            "title": pull_request["title"],
+        },
+        "commits": commits,
+    }
 
 
 def main():
     try:
-        app_log("📌 Buscando tus PRs actualizados hoy...\n")
-        prs = get_all_prs()
-
-        app_log(f"🔵 Encontrados {len(prs)} PRs actualizados hoy.\n")
-        if not prs:
+        app_log("📌 Buscando tus PRs actualizados hoy...")
+        pull_request = get_all_prs()
+        app_log(f"🔵 Encontrados {len(pull_request)} PRs actualizados hoy.")
+        if not pull_request:
             exit("No hay PRs hoy.")
 
-        reporte_str = ""
-        for pr in prs:
-            reporte_str += show_pr(pr)
+        report_json = [extract_pr(pull_request) for pull_request in pull_request]
+        report_raw = json.dumps(report_json, ensure_ascii=False, separators=(",", ":"))
 
-        app_log(reporte_str)
-        dr = generate_professional_report(reporte_str)
-        app_log(dr)
+        app_log(report_raw)
+        daily_report = generate_professional_report(report_raw)
+        app_log(daily_report)
 
     except Exception as error:
         app_log(f"Error: {error}")
