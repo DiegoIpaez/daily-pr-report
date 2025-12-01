@@ -28,7 +28,7 @@ def save_log(filename, content, folder="app"):
 
 
 def app_log(content):
-    print(content)
+    print(f"{content}\n")
     save_log("app.log", content)
 
 
